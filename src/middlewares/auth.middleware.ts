@@ -22,11 +22,12 @@ export const protect = catchAsync(async (req: AuthenticatedRequest, res: Respons
   }
 
   // 2) Verification token
-  const decoded = jwt.verify(token, config.jwtSecret) as { id: string };
+  const decoded = jwt.verify(token, config.jwtSecret) as { id: string | number };
+  const userId = typeof decoded.id === 'string' ? Number(decoded.id) : decoded.id;
 
   // 3) Check if user still exists
   const currentUser = await prisma.user.findUnique({
-    where: { id: decoded.id },
+    where: { id: userId },
   });
 
   if (!currentUser) {

@@ -29,22 +29,23 @@ export const getUsers = catchAsync(async (req: AuthenticatedRequest, res: Respon
 export const updateUserStatus = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { status } = req.body;
-
+  const idNum = Number(id);
+  if (Number.isNaN(idNum)) return next(new AppError('Invalid user id', 400));
   if (status !== UserStatus.ACTIVE && status !== UserStatus.BANNED) {
     return next(new AppError('Invalid user status. Must be ACTIVE or BANNED.', 400));
   }
 
-  if (id === req.user!.id) {
+  if (idNum === req.user!.id) {
     return next(new AppError('You cannot ban your own administrator account', 400));
   }
 
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await prisma.user.findUnique({ where: { id: idNum } });
   if (!user) {
     return next(new AppError('User not found', 404));
   }
 
   const updatedUser = await prisma.user.update({
-    where: { id },
+    where: { id: idNum },
     data: { status },
     select: {
       id: true,

@@ -41,7 +41,7 @@ export const createPaymentSession = catchAsync(async (req: AuthenticatedRequest,
   let sessionId = '';
 
   try {
-    const session = await createCheckoutSession(booking.id, amount, booking.service.name, transactionId);
+    const session = await createCheckoutSession(String(booking.id), amount, booking.service.name, transactionId);
     sessionUrl = session.url || '';
     sessionId = session.id;
   } catch (error: any) {
@@ -186,11 +186,15 @@ export const getPaymentHistory = catchAsync(async (req: AuthenticatedRequest, re
 
 export const getPaymentDetails = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
+  const paymentId = Number(id);
+  if (Number.isNaN(paymentId)) {
+    return next(new AppError('Invalid payment id', 400));
+  }
   const userId = req.user!.id;
   const role = req.user!.role;
 
   const payment = await prisma.payment.findUnique({
-    where: { id },
+    where: { id: paymentId },
     include: {
       booking: {
         include: {

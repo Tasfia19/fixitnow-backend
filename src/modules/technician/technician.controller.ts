@@ -123,7 +123,10 @@ export const getMyServices = catchAsync(async (req: AuthenticatedRequest, res: R
 });
 
 export const deleteService = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10);
+  if (Number.isNaN(id)) {
+    return next(new AppError('Invalid service id', 400));
+  }
   const userId = req.user!.id;
 
   const service = await prisma.service.findUnique({

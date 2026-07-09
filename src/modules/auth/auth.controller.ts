@@ -8,8 +8,8 @@ import { config } from '../../config';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { Role } from '@prisma/client';
 
-const signToken = (id: string) => {
-  return jwt.sign({ id }, config.jwtSecret, {
+const signToken = (id: string | number) => {
+  return jwt.sign({ id: String(id) }, config.jwtSecret, {
     expiresIn: config.jwtExpiresIn as any,
   });
 };
