@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  email             String             @unique
+  password          String
+  name              String
+  role              Role
+  status            UserStatus         @default(ACTIVE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  id                Int                @id @default(autoincrement())
+  bookings          Booking[]          @relation("CustomerBookings")
+  reviews           Review[]           @relation("CustomerReviews")
+  technicianProfile TechnicianProfile?
+}
+
+model TechnicianProfile {
+  skills       String[]
+  experience   Int
+  bio          String?
+  pricePerHour Float
+  location     String
+  rating       Float     @default(0.0)
+  availability String[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  id           Int       @id @default(autoincrement())
+  userId       Int       @unique
+  bookings     Booking[] @relation("TechnicianBookings")
+  reviews      Review[]  @relation("TechnicianReviews")
+  services     Service[]
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  id          Int       @id @default(autoincrement())
+  services    Service[]
+}
+
+model Service {
+  name                String
+  description         String?
+  price               Float
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  id                  Int               @id @default(autoincrement())
+  categoryId          Int
+  technicianProfileId Int
+  bookings            Booking[]
+  category            Category          @relation(fields: [categoryId], references: [id])
+  technicianProfile   TechnicianProfile @relation(fields: [technicianProfileId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  scheduledAt  DateTime
+  status       BookingStatus     @default(REQUESTED)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  id           Int               @id @default(autoincrement())
+  customerId   Int
+  technicianId Int
+  serviceId    Int
+  customer     User              @relation("CustomerBookings", fields: [customerId], references: [id])
+  service      Service           @relation(fields: [serviceId], references: [id])
+  technician   TechnicianProfile @relation("TechnicianBookings", fields: [technicianId], references: [id])
+  payment      Payment?
+  review       Review?
+}
+
+model Payment {
+  amount        Float
+  transactionId String          @unique
+  method        String
+  provider      PaymentProvider @default(STRIPE)
+  status        PaymentStatus   @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  id            Int             @id @default(autoincrement())
+  bookingId     Int             @unique
+  booking       Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  rating       Int
+  comment      String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  id           Int               @id @default(autoincrement())
+  bookingId    Int               @unique
+  customerId   Int
+  technicianId Int
+  booking      Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer     User              @relation("CustomerReviews", fields: [customerId], references: [id])
+  technician   TechnicianProfile @relation("TechnicianReviews", fields: [technicianId], references: [id])
+}
+
+enum Role {
+  CUSTOMER
+  TECHNICIAN
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  DECLINED
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentProvider {
+  STRIPE
+  SSLCOMMERZ
+}
